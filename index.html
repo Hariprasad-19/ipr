@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: black;
+      color: white;
+    }
+    .quiz-container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      background-color: #333;
+    }
+    .question {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+    .choices {
+      margin-top: 10px;
+    }
+    .choices label {
+      display: block;
+      margin-bottom: 5px;
+      padding: 10px 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #444;
+      color: white;
+    }
+    .choices label.selected {
+      background-color: black; /* Highlight the selected option in black */
+      color: white;
+    }
+    .choices label.correct {
+      background-color: green;
+      color: white;
+      border: 1px solid green;
+    }
+    .choices label.wrong {
+      background-color: red;
+      color: white;
+      border: 1px solid red;
+    }
+    .next-btn {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .next-btn:hover {
+      background-color: #0056b3;
+    }
+    .category-select {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+.red-star {
+  color: red;
+  font-weight: bold;
+    #results {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div class="category-select">
+      <h2>Select Difficulty Level</h2>
+      <button onclick="startQuiz('Beginner')">Beginner</button>
+      <button onclick="startQuiz('Intermediate')">Intermediate</button>
+      <button onclick="startQuiz('Expert')">Expert</button>
+    </div>
+    <div id="quizContent"></div>
+    <button class="next-btn" id="nextBtn" onclick="submitQuiz()" style="display: none;">Submit Answers</button>
+    <div id="results"></div>
+  </div>
+  <script>
+    const quizData = [
+  {
+    question: "What is the origin of the word 'Patent'?",
+    choices: ["French word 'Patente'", "Greek word 'Patentas'", "Latin word 'Patene'", "Old English word 'Pætent'"],
+    answer: "Latin word 'Patene'"
+  },
+  {
+    question: "What does the word 'Patene' mean in Latin?",
+    choices: ["To protect", "To open", "To invent", "To disclose"],
+    answer: "To open"
+  },
+  {
+    question: "What is the primary purpose of the Patent System?",
+    choices: ["To promote technological innovation and transfer", "To keep inventions secret", "To limit the use of inventions", "To grant exclusive rights to the inventor"],
+    answer: "To promote technological innovation and transfer"
+  },
+  {
+    question: "What type of right is a patent?",
+    choices: ["Global", "International", "Territorial", "Universal"],
+    answer: "Territorial"
+  },
+  {
+    question: "Which of the following is NOT a feature of a patent right?",
+    choices: ["It can be enforced only in the country where it is granted.", "It is granted for an unlimited period.", "It is territorial in nature", "It provides exclusivity to the patent holder."],
+    answer: "It is granted for an unlimited period."
+  },
+  {
+    question: "What happens to a patented invention after the patent expires?",
+    choices: ["It becomes open to the public for free use", "It remains the property of the patent holder", "It can only be used with the government’s permission", "It is automatically renewed for another 20 years"],
+    answer: "It becomes open to the public for free use"
+  },
+  {
+    question: "Which of the following cannot be patented?",
+    choices: ["A new and useful machine", "A process to improve a known apparatus", "A new substance produced by manufacture", "Aesthetic creations"],
+    answer: "Aesthetic creations"
+  },
+  {
+    question: "In which of the following cases is a patent not advisable?",
+    choices: ["When there is a high market potential", "When the invention aligns with business strategy", "When the invention is easy to reverse engineer", "When investors are interested in the invention"],
+    answer: "When the invention is easy to reverse engineer"
+  },
+  {
+    question: "Who typically owns the rights to a patent in the case of an employee invention?",
+    choices: ["The employer", "The employee", "Both the employee and employer jointly", "The government"],
+    answer: "The employer"
+  },
+  {
+    question: "What does 'non-obviousness' in a patent requirement mean?",
+    choices: ["The invention is simple to understand", "The invention is hidden from public view", "The invention is not easily deduced by someone skilled in the field", "The invention is legally protected"],
+    answer: "The invention is not easily deduced by someone skilled in the field"
+  },
+  {
+    question: "What is a key requirement for an invention to be considered 'new' or 'novel'?",
+    choices: ["It must be based on existing technology", "It must not be part of the prior art", "It must have a practical application", "It must be easy to understand"],
+    answer: "It must not be part of the prior art"
+  },
+  {
+    question: "What is meant by 'capable of industrial application'?",
+    choices: ["The invention must only be used in manufacturing", "The invention must be theoretical", "The invention must be aesthetically pleasing", "The invention must be useful and provide a practical benefit"],
+    answer: "The invention must be useful and provide a practical benefit"
+  },
+  {
+    question: "Which of the following is NOT an example of patentable subject matter?",
+    choices: ["A new machine", "A scientific theory", "A new chemical process", "A new method of manufacture"],
+    answer: "A scientific theory"
+  },
+  {
+    question: "Which factor is crucial in deciding whether to file a patent application?",
+    choices: ["The cost of the application", "The inventor's personal preferences", "The probability of obtaining commercially useful protection", "The ease of drafting the application"],
+    answer: "The probability of obtaining commercially useful protection"
+  },
+  {
+    question: "Which of the following is excluded from patentability according to most national laws?",
+    choices: ["New and useful products", "Inventive processes", "Discoveries of natural substances", "Chemical compositions"],
+    answer: "Discoveries of natural substances"
+  },
+  {
+    question: "What is the main benefit of disclosing an invention through the patent system?",
+    choices: ["Keeping the invention secret", "Gaining legal protection and potential financial returns", "Avoiding the need for commercialization", "Transferring ownership to the government"],
+    answer: "Gaining legal protection and potential financial returns"
+  },
+  {
+    question: "What is the consequence of not paying the required maintenance fees for a patent?",
+    choices: ["The patent is automatically renewed", "The patent expires", "The patent is transferred to the government", "The patent is reassigned to another inventor"],
+    answer: "The patent expires"
+  },
+  {
+    question: "Which of the following is an advantage of a strong patent portfolio?",
+    choices: ["It reduces competition", "It hinders technological progress", "It enhances the company's economic health", "It increases the cost of innovation"],
+    answer: "It enhances the company's economic health"
+  },
+  {
+    question: "Who is considered the inventor in the context of a patent application?",
+    choices: ["The person who conceived the invention", "The company that funded the research", "The person who filed the patent application", "The government authority granting the patent"],
+    answer: "The person who conceived the invention"
+  },
+  {
+    question: "What is 'prior art' in the context of patent law?",
+    choices: ["Artistic work related to the invention", "All relevant technical knowledge available to the public before the filing date", "Previous patents filed by the same inventor", "Any invention made in the same field"],
+    answer: "All relevant technical knowledge available to the public before the filing date"
+  },
+  {
+    question: "Which of the following is a possible alternative to filing a patent application?",
+    choices: ["Keeping the invention as a trade secret", "Publicly disclosing the invention", "Filing a copyright application instead", "Assigning the invention to another inventor"],
+    answer: "Keeping the invention as a trade secret"
+  },
+  {
+    question: "What is the significance of the 'disclosure requirement' in a patent application?",
+    choices: ["It ensures the invention is kept secret", "It allows others to replicate the invention", "It provides enough detail for someone skilled in the field to carry out the invention", "It limits the scope of the patent"],
+    answer: "It provides enough detail for someone skilled in the field to carry out the invention"
+  },
+  {
+    question: "What is the effect of joint ownership on a patent?",
+    choices: ["One co-owner can license the patent without the consent of others", "Each co-owner must consent to any licensing or enforcement of the patent", "The patent is automatically revoked", "The government takes over ownership"],
+    answer: "Each co-owner must consent to any licensing or enforcement of the patent"
+  },
+  {
+    question: "Which of the following is NOT typically covered under patent law?",
+    choices: ["A method of performing a mental act", "A novel chemical composition", "A machine used in agriculture", "A process for manufacturing a new product"],
+    answer: "A method of performing a mental act"
+  },
+  {
+    question: "In most countries, patents are granted to which of the following?",
+    choices: ["The first inventor", "The company funding the research", "The government", "The first person to file a patent application"],
+    answer: "The first person to file a patent application"
+  },
+  {
+    question: "What is an Ordinary Application?",
+    choices: ["A patent application claiming priority from another country", "A patent application with multiple inventions", "A patent application without claiming priority from any other application", "A patent application for a provisional patent"],
+    answer: "A patent application without claiming priority from any other application"
+  },
+  {
+    question: "What is a Convention Application?",
+    choices: ["An application for a new invention without priority", "An application claiming priority from a previously filed application in a non-convention country", "An application for minor modifications of an existing patent", "An application claiming priority from a previously filed application in a convention country"],
+    answer: "An application claiming priority from a previously filed application in a convention country"
+  },
+  {
+    question: "What is required when filing a Convention Application in India?",
+    choices: ["Only a complete specification", "Only a provisional specification", "A priority document and its English translation, if required", "A detailed technical report"],
+    answer: "A priority document and its English translation, if required"
+  },
+  {
+    question: "What does PCT stand for?",
+    choices: ["Patent Convention Treaty", "Patent Cooperation Treaty", "Priority Country Treaty", "Patent Cooperation Transaction"],
+    answer: "Patent Cooperation Treaty"
+  },
+  {
+    question: "How many countries can a PCT International Application be validated in?",
+    choices: ["Up to 100 countries", "Up to 142 countries", "Up to 120 countries", "Up to 160 countries"],
+    answer: "Up to 142 countries"
+  },
+  {
+    question: "Which of the following terms defines 'national phase'?",
+    choices: ["The stage of an application before the PCT process begins", "The stage where an international patent is granted", "The stage where the PCT application enters individual countries for examination", "The stage after the patent is granted"],
+    answer: "The stage where the PCT application enters individual countries for examination"
+  },
+  {
+    question: "What is the maximum term for which a patent is granted under the Patent Cooperation Treaty?",
+    choices: ["15 years", "20 years", "10 years", "25 years"],
+    answer: "20 years"
+  },
+  {
+    question: "How long is the initial period for international search under the PCT?",
+    choices: ["6 months", "12 months", "18 months", "30 months"],
+    answer: "6 months"
+  },
+  {
+    question: "What is the primary purpose of the Patent Cooperation Treaty?",
+    choices: ["To simplify the patent application process", "To unify patent laws across countries", "To enable easier filing of patents internationally", "To increase patent fees"],
+    answer: "To enable easier filing of patents internationally"
+  },
+  {
+    question: "Which of the following is true regarding the filing of PCT applications?",
+    choices: ["It can only be filed through a single patent office", "It allows for a single international application to be filed for multiple countries", "It does not require a priority claim", "It is only valid in EU countries"],
+    answer: "It allows for a single international application to be filed for multiple countries"
+  },
+  {
+    question: "What is an important benefit of the PCT process for inventors?",
+    choices: ["Immediate patent protection in all countries", "An extended period to decide which countries to pursue patent protection", "Reduced costs for patent applications", "Elimination of the need for patents"],
+    answer: "An extended period to decide which countries to pursue patent protection"
+  },
+  {
+    question: "Which type of patent is specifically designed for new inventions?",
+    choices: ["Design patent", "Utility patent", "Provisional patent", "Plant patent"],
+    answer: "Utility patent"
+  },
+  {
+    question: "What is a Design Patent?",
+    choices: ["A patent for new inventions", "A patent for the ornamental design of a functional item", "A patent for plant varieties", "A patent for the functional aspects of a product"],
+    answer: "A patent for the ornamental design of a functional item"
+  },
+  {
+    question: "What does a Plant Patent cover?",
+    choices: ["A new type of machine", "A new type of plant variety", "A new chemical composition", "A new process"],
+    answer: "A new type of plant variety"
+  },
+  {
+    question: "What is a Provisional Patent Application?",
+    choices: ["A temporary patent granted for one year", "A patent for a short-term invention", "An application that establishes an early filing date without formal patent claims", "A patent that can be renewed annually"],
+    answer: "An application that establishes an early filing date without formal patent claims"
+  },
+  {
+    question: "Which of the following describes the concept of 'first to file'?",
+    choices: ["The first inventor is awarded the patent", "The first person to file a patent application is granted the patent", "The first patent granted has priority over others", "The first inventor to demonstrate the invention gets the patent"],
+    answer: "The first person to file a patent application is granted the patent"
+  },
+  {
+    question: "Which of the following is true about patents in the context of international law?",
+    choices: ["Patents are uniformly recognized worldwide", "Each country has its own patent laws and regulations", "Patents are only valid in the country of origin", "Patents are administered by a single global organization"],
+    answer: "Each country has its own patent laws and regulations"
+  },
+  {
+    question: "What is the typical duration of a utility patent in the United States?",
+    choices: ["10 years", "15 years", "20 years", "25 years"],
+    answer: "20 years"
+  },
+  {
+    question: "What is the primary reason for obtaining a patent?",
+    choices: ["To gain fame", "To share knowledge", "To gain exclusive rights to an invention", "To satisfy personal goals"],
+    answer: "To gain exclusive rights to an invention"
+  },
+  {
+    question: "What is one limitation of patent rights?",
+    choices: ["They are valid in all countries", "They can be sold or licensed", "They do not prevent others from creating similar products", "They are easy to enforce"],
+    answer: "They do not prevent others from creating similar products"
+  },
+  {
+    question: "What is the first step in the patent application process?",
+    choices: ["Filing the application", "Conducting a prior art search", "Receiving a patent grant", "Submitting a patent maintenance fee"],
+    answer: "Conducting a prior art search"
+  },
+  {
+    question: "What is a 'patent examiner'?",
+    choices: ["A person who checks patent applications for completeness", "An attorney specializing in patent law", "A government official who reviews patent applications", "A researcher studying patented inventions"],
+    answer: "A government official who reviews patent applications"
+  },
+  {
+    question: "Which of the following actions can invalidate a patent?",
+    choices: ["Failure to pay maintenance fees", "Success in market", "A new patent issued", "International filing"],
+    answer: "Failure to pay maintenance fees"
+  },
+  {
+    question: "What is a 'patent troll'?",
+    choices: ["A company that develops new technologies", "An individual or company that enforces patent rights aggressively without producing goods", "A government agency overseeing patent applications", "A researcher working in patent law"],
+    answer: "An individual or company that enforces patent rights aggressively without producing goods"
+  },
+  {
+    question: "What is a key requirement for a successful patent enforcement?",
+    choices: ["Global recognition of the patent", "Ability to provide detailed documentation of the invention", "Presence of a patent examiner", "Public opinion support"],
+    answer: "Ability to provide detailed documentation of the invention"
+  },
+  {
+    question: "Which of the following is true regarding the enforceability of a patent?",
+    choices: ["Patents are enforceable in all countries", "Only the patent holder can enforce their rights", "Patents must be renewed annually to remain enforceable", "Patents are enforced by government agencies"],
+    answer: "Only the patent holder can enforce their rights"
+  },
+  {
+    question: "What is the primary goal of the United States Patent and Trademark Office (USPTO)?",
+    choices: ["To ensure the quality of patents", "To promote trade", "To regulate patent attorneys", "To provide legal advice to inventors"],
+    answer: "To ensure the quality of patents"
+  },
+  {
+    question: "How can an inventor protect their invention before filing a patent application?",
+    choices: ["Publicly disclosing the invention", "Maintaining a trade secret", "Using a provisional patent application", "Filing for a copyright"],
+    answer: "Using a provisional patent application"
+  },
+  {
+    question: "What is one benefit of using a patent attorney?",
+    choices: ["Lower application fees", "Expert guidance on patentability and application processes", "Guarantee of patent approval", "Faster patent processing times"],
+    answer: "Expert guidance on patentability and application processes"
+  },
+  {
+    question: "What is an 'abandonment' of a patent application?",
+    choices: ["A patent application that has been granted", "A patent application that has been withdrawn or not pursued", "A patent application that is rejected", "A patent application that has expired"],
+    answer: "A patent application that has been withdrawn or not pursued"
+  },
+  {
+    question: "Which of the following is a potential consequence of not conducting a prior art search?",
+    choices: ["Higher chances of patent approval", "Increased likelihood of infringement", "Faster application process", "Decreased filing fees"],
+    answer: "Increased likelihood of infringement"
+  },
+  {
+    question: "What is the significance of patent citations?",
+    choices: ["They indicate the popularity of a patent", "They provide a record of prior art references", "They determine the patent's validity", "They are used for marketing purposes"],
+    answer: "They provide a record of prior art references"
+  },
+  {
+    question: "What is 'patent litigation'?",
+    choices: ["The process of filing a patent application", "The process of enforcing patent rights through legal proceedings", "The study of patent law", "The review of patent applications"],
+    answer: "The process of enforcing patent rights through legal proceedings"
+  },
+  {
+    question: "What can happen if a patent is found to be invalid in court?",
+    choices: ["The patent is automatically renewed", "The patent holder can appeal", "The patent is unenforceable and may be revoked", "The patent is transferred to another inventor"],
+    answer: "The patent is unenforceable and may be revoked"
+  },
+  {
+    question: "Which of the following best describes a patent infringement?",
+    choices: ["Unauthorized use of a patented invention", "Failure to pay maintenance fees", "The process of filing a patent application", "The act of renewing a patent"],
+    answer: "Unauthorized use of a patented invention"
+  },
+  {
+    question: "What is a potential remedy for patent infringement?",
+    choices: ["Cancellation of the patent", "Monetary damages or injunctions", "Immediate renewal of the patent", "Transfer of the patent rights"],
+    answer: "Monetary damages or injunctions"
+  },
+  {
+    question: "What is a common reason for a patent to be rejected?",
+    choices: ["Failure to meet novelty requirements", "Incomplete application", "Unclear invention description", "All of the above"],
+    answer: "All of the above"
+  },
+
+    {
+        "question": "Which system is employed in patent law that prioritizes the first person to file a patent application?",
+        "choices": ["First to invent", "First to file", "First to publish", "First to market"],
+        "answer": "First to file"
+    },
+    {
+        "question": "What could jeopardize the chance of obtaining a patent?",
+        "choices": ["Filing the application early", "Keeping the invention secret", "Publishing the invention before applying for a patent", "Consulting a patent agent"],
+        "answer": "Publishing the invention before applying for a patent"
+    },
+    {
+        "question": "What is advisable for inventors to file as soon as their idea takes a definite shape?",
+        "choices": ["Complete Specification", "Provisional Specification", "Final Examination Report", "Renewal Application"],
+        "answer": "Provisional Specification"
+    },
+    {
+        "question": "Which form is used for requesting early publication of a patent application?",
+        "choices": ["Form 1", "Form 5", "Form 9", "Form 18"],
+        "answer": "Form 9"
+    },
+    {
+        "question": "Which document must be submitted if the priority date is claimed in a convention application?",
+        "choices": ["Declaration of inventorship", "Priority document", "Abstract of the invention", "Power of attorney"],
+        "answer": "Priority document"
+    },
+    {
+        "question": "How many copies of the application form are required for filing a patent application?",
+        "choices": ["One", "Two", "Three", "Four"],
+        "answer": "Three"
+    },
+    {
+        "question": "What is the penalty for not meeting the objections in the First Examination Report (FER) within 12 months?",
+        "choices": ["Fine is imposed", "Patent is granted automatically", "The application is deemed abandoned", "The application is sent for re-examination"],
+        "answer": "The application is deemed abandoned"
+    },
+    {
+        "question": "What section of the Patent Act outlines the grounds for opposition?",
+        "choices": ["Section 7", "Section 9", "Section 25", "Section 43"],
+        "answer": "Section 25"
+    },
+    {
+        "question": "Which form is required for filing a post-grant opposition?",
+        "choices": ["Form 7", "Form 18", "Form 5", "Form 9"],
+        "answer": "Form 7"
+    },
+    {
+        "question": "What is one common mistake made by inventors that could harm their patent application?",
+        "choices": ["Filing the patent too early", "Filing without a power of attorney", "Publicly disclosing the invention before filing for a patent", "Hiring a patent agent"],
+        "answer": "Publicly disclosing the invention before filing for a patent"
+    },
+    {
+        "question": "What is a key consideration when deciding where to patent an invention?",
+        "choices": ["Where the inventor's family lives", "Where the product is likely to be commercialized", "Where the inventor vacations", "Where the inventor's competitors are located"],
+        "answer": "Where the product is likely to be commercialized"
+    },
+    {
+        "question": "Which route involves filing a patent application in each country individually?",
+        "choices": ["International route", "National route", "Regional route", "Global route"],
+        "answer": "National route"
+    },
+    {
+        "question": "What does licensing a patent involve?",
+        "choices": ["Selling the patent outright", "Granting permission to another party to use the patented invention", "Filing a patent in multiple countries", "Manufacturing the product yourself"],
+        "answer": "Granting permission to another party to use the patented invention"
+    },
+    {
+        "question": "What is an advantage of licensing a patent?",
+        "choices": ["It reduces legal costs", "It provides an additional source of revenue", "It simplifies the patent process", "It limits the market reach of the invention"],
+        "answer": "It provides an additional source of revenue"
+    },
+    {
+        "question": "What is an exclusive license?",
+        "choices": ["Multiple licensees share the rights", "A single licensee has the right to use the patented technology", "The patent owner retains full rights", "The patent owner cannot use the technology"],
+        "answer": "A single licensee has the right to use the patented technology"
+    },
+    {
+        "question": "What is cross-licensing?",
+        "choices": ["Two competitors exchange rights to each other's patents", "Licensing to multiple companies", "Licensing without any fees", "Selling the patent to the highest bidder"],
+        "answer": "Two competitors exchange rights to each other's patents"
+    },
+    {
+        "question": "What is a compulsory license?",
+        "choices": ["A government-mandated license when public interest is involved", "A license granted by the patent owner under pressure", "A license that is automatically granted after three years", "A license that is required in every country"],
+        "answer": "A government-mandated license when public interest is involved"
+    },
+    {
+        "question": "When can a compulsory license be terminated under Indian law?",
+        "choices": ["Only after the patent expires", "If the circumstances that led to its grant no longer exist", "When the patent owner demands it", "After five years of the license being in effect"],
+        "answer": "If the circumstances that led to its grant no longer exist"
+    },
+    {
+        "question": "What is considered an infringement of a patent?",
+        "choices": ["Unauthorized use of the patented invention", "Using the invention with the owner's consent", "Improving upon the patented invention", "Filing a patent in another country"],
+        "answer": "Unauthorized use of the patented invention"
+    },
+    {
+        "question": "What must an inventor provide to a patent attorney for effective patent drafting?",
+        "choices": ["Only the successful parts of the invention", "Only the final product", "Complete details of the invention, including failures", "A summary of the invention"],
+        "answer": "Complete details of the invention, including failures"
+    },
+    {
+        "question": "What does Section 107A of the Indian Patent Act state?",
+        "choices": ["Certain acts related to development and submission of information are not considered infringement", "Importing patented products is illegal", "All uses of a patented invention are considered infringement", "Infringement can only occur in the country of the patent holder"],
+        "answer": "Certain acts related to development and submission of information are not considered infringement"
+    },
+    {
+        "question": "What relief can a patentee seek in case of infringement under Indian law?",
+        "choices": ["Injunction and damages", "Patent revocation", "License cancellation", "Public apology from the infringer"],
+        "answer": "Injunction and damages"
+    },
+    {
+        "question": "What is one advantage of arbitration in patent disputes?",
+        "choices": ["It is less formal and shorter than court proceedings", "It is always free of charge", "It guarantees a favourable outcome for the patentee", "It allows public scrutiny"],
+        "answer": "It is less formal and shorter than court proceedings"
+    },
+    {
+        "question": "Why might a company choose to send a ‘cease and desist letter’?",
+        "choices": ["To inform the alleged infringer of a potential patent conflict", "To license the patent to the infringer", "To revoke the infringer's patent", "To initiate a criminal case"],
+        "answer": "To inform the alleged infringer of a potential patent conflict"
+    },
+    {
+        "question": "What is the purpose of a ‘cease and desist letter’?",
+        "choices": ["To stop infringing activities", "To grant a license", "To terminate a patent", "To enforce a compulsory license"],
+        "answer": "To stop infringing activities"
+    },
+    {
+        "question": "Which organization provides services for alternative dispute resolution?",
+        "choices": ["World Trade Organization (WTO)", "World Intellectual Property Organization (WIPO)", "European Patent Office (EPO)", "International Monetary Fund (IMF)"],
+        "answer": "World Intellectual Property Organization (WIPO)"
+    },
+    {
+        "question": "What is the role of the WIPO Arbitration and Mediation Centre?",
+        "choices": ["To file patents internationally", "To enforce patent laws", "To draft patent agreements", "To provide alternative dispute resolution services"],
+        "answer": "To provide alternative dispute resolution services"
+    },
+    {
+        "question": "Which article of the TRIPS agreement provides for the right to information in infringement cases?",
+        "choices": ["Article 47", "Article 44", "Article 46", "Article 45"],
+        "answer": "Article 47"
+    },
+    {
+        "question": "What is the primary function of a trademark?",
+        "choices": ["To protect intellectual property", "To advertise a company", "To increase product prices", "To identify the source of goods or services"],
+        "answer": "To identify the source of goods or services"
+    },
+    {
+        "question": "Which of the following can be registered as a trademark in some countries?",
+        "choices": ["Shapes of products", "Personal names", "Generic terms", "Flags of nations"],
+        "answer": "Shapes of products"
+    },
+    {
+        "question": "Which of the following is NOT a characteristic of a trademark?",
+        "choices": ["It should be distinctive", "It should be descriptive of the product and its basic component/ingredients", "It should be non-deceptive", "It should be capable of being represented graphically"],
+        "answer": "It should be descriptive of the product and its basic component/ingredients"
+    },
+    {
+        "question": "What is a service mark?",
+        "choices": ["A mark indicating a product", "A mark used to distinguish services", "A mark used to register geographical indications", "A mark that cannot be renewed"],
+        "answer": "A mark used to distinguish services"
+    },
+    {
+        "question": "What is the duration of trademark protection in many countries?",
+        "choices": ["5 years and non-renewable", "10 years and renewable", "20 years and non-renewable", "Indefinitely"],
+        "answer": "10 years and renewable"
+    },
+    {
+        "question": "What is an example of a strong trademark?",
+        "choices": ["Descriptive mark", "Generic mark", "Fanciful mark", "Non-distinctive mark"],
+        "answer": "Fanciful mark"
+    },
+    {
+        "question": "What happens if a trademark becomes a generic term?",
+        "choices": ["It becomes stronger", "It is more protected", "It loses its protection", "It is automatically renewed"],
+        "answer": "It loses its protection"
+    },
+    {
+        "question": "What is an example of a trademark that has become generic?",
+        "choices": ["Kleenex for tissues", "Nike for shoes", "Apple for computers", "Coca-Cola for drinks"],
+        "answer": "Kleenex for tissues"
+    },
+    {
+        "question": "What does a certification mark indicate?",
+        "choices": ["A mark indicating compliance with standards", "A mark indicating a geographical location", "A mark that is identical to a trademark", "A mark that cannot be used by others"],
+        "answer": "A mark indicating compliance with standards"
+    },
+    {
+        "question": "What is a sound mark?",
+        "choices": ["A visual representation of a product", "A sound", "A mark used to indicate geographic origin", "A mark that is unique to a particular company"],
+        "answer": "A sound"
+    },
+    {
+        "question": "What is one potential benefit of trademark registration?",
+        "choices": ["Reducing the cost of production", "Increasing visibility of the brand", "Eliminating competition", "Guaranteeing profits"],
+        "answer": "Increasing visibility of the brand"
+    },
+    {
+        "question": "What is one reason why a trademark may be refused registration?",
+        "choices": ["The mark is descriptive", "The mark is distinctive", "The mark has been registered previously", "The mark is famous"],
+        "answer": "The mark is descriptive"
+    },
+    {
+        "question": "What can happen if a trademark is not used for a specified period?",
+        "choices": ["It is automatically renewed", "It can be challenged and potentially canceled", "It becomes stronger", "It is converted to a copyright"],
+        "answer": "It can be challenged and potentially canceled"
+    },
+    {
+        "question": "What is one requirement for trademark registration?",
+        "choices": ["It must be descriptive", "It must be distinctive", "It must be a common name", "It must be a geographical term"],
+        "answer": "It must be distinctive"
+    },
+    {
+        "question": "What is one aspect of copyright law?",
+        "choices": ["It protects ideas", "It protects original literary, dramatic, musical, artistic work", "It is for a limited duration only", "It is enforced by the government"],
+        "answer": "It protects original literary, dramatic, musical, artistic work"
+    },
+    {
+        "question": "What is the duration of copyright protection in many countries?",
+        "choices": ["The author's life plus 50 years", "The author's life plus 70 years", "20 years from publication", "Indefinitely"],
+        "answer": "The author's life plus 70 years"
+    },
+    {
+        "question": "What does copyright protect?",
+        "choices": ["The expression of an idea", "The idea itself", "Facts and data", "Discoveries"],
+        "answer": "The expression of an idea"
+    },
+
+    {
+        "question": "Which of the following is included under the definition of a computer program in the Copyright Act?",
+        "choices": ["Hardware configurations", "Source codes and object codes", "Software installation manuals", "User interface designs"],
+        "answer": "Source codes and object codes"
+    },
+    {
+        "question": "Which of the following is an example of moral rights under copyright?",
+        "choices": ["Right to sell the work", "Right to claim authorship", "Right to license the work", "Right to modify the work"],
+        "answer": "Right to claim authorship"
+    },
+    {
+        "question": "Which of the following categories is not protected by copyright?",
+        "choices": ["Titles and short phrases", "Dramatic works", "Musical works", "Pantomimes"],
+        "answer": "Titles and short phrases"
+    },
+    {
+        "question": "What is true about Public Domain software?",
+        "choices": ["It has strict copyright restrictions", "It allows free modification and distribution", "It requires a license for use", "It cannot be used commercially"],
+        "answer": "It allows free modification and distribution"
+    },
+    {
+        "question": "What is the primary difference between Freeware and Public Domain software?",
+        "choices": ["Freeware is not protected by copyright", "Freeware allows modification only with restrictions", "Public Domain software has no copyright protection", "Public Domain software requires payment for use"],
+        "answer": "Public Domain software has no copyright protection"
+    },
+    {
+        "question": "Which software category explicitly allows reverse engineering (decompiling) without permission?",
+        "choices": ["Commercial Software", "Shareware", "Freeware", "Public Domain"],
+        "answer": "Public Domain"
+    },
+    {
+        "question": "Under copyright law, what is an author’s 'right of integrity'?",
+        "choices": ["The right to modify the work", "The right to publish the work", "The right to prevent alteration of the work", "The right to sell the work"],
+        "answer": "The right to prevent alteration of the work"
+    },
+    {
+        "question": "What does industrial design primarily refer to?",
+        "choices": ["The technical aspects of a product", "The ornamental or aesthetic aspects of a product", "The functional features of a product", "The marketing strategy of a product"],
+        "answer": "The ornamental or aesthetic aspects of a product"
+    },
+    {
+        "question": "Which of the following is not typically included in industrial design protection?",
+        "choices": ["The shape of a product", "The pattern of a product", "The technical function of a product", "The colour of a product"],
+        "answer": "The technical function of a product"
+    },
+    {
+        "question": "Industrial design can be applied to which of the following products?",
+        "choices": ["Medical instruments", "Furniture", "Jewelry", "All of these"],
+        "answer": "All of these"
+    },
+    {
+        "question": "Which feature of a design is considered a three-dimensional feature?",
+        "choices": ["Colour", "Pattern", "Shape", "Ornamentation"],
+        "answer": "Shape"
+    },
+    {
+        "question": "What is required for a design to be considered 'new'?",
+        "choices": ["It must have been published in a magazine", "It must not have been made available to the public before the filing date", "It must be a copy of an existing design", "It must be patented"],
+        "answer": "It must not have been made available to the public before the filing date"
+    },
+    {
+        "question": "Which of the following is a reason businesses invest in new and original designs?",
+        "choices": ["To reduce the cost of production", "To customize products for specific market segments", "To increase the number of employees", "To simplify the manufacturing process"],
+        "answer": "To customize products for specific market segments"
+    },
+    {
+        "question": "Which of the following cannot be protected as an industrial design?",
+        "choices": ["A new shape for a chair", "A technical drawing of a machine", "A book cover design", "A pattern on fabric"],
+        "answer": "A technical drawing of a machine"
+    },
+    {
+        "question": "How long does industrial design protection typically last?",
+        "choices": ["5 years", "10 years", "15 years", "20 years"],
+        "answer": "10 years"
+    },
+    {
+        "question": "What is a common grace period for registering an industrial design after it has been made public?",
+        "choices": ["3 months", "6 months", "12 months", "18 months"],
+        "answer": "6 months"
+    },
+    {
+        "question": "What does 'industrial design' not typically include?",
+        "choices": ["Product packaging", "Architectural structures", "Buildings and structures", "Furniture design"],
+        "answer": "Buildings and structures"
+    },
+    {
+        "question": "What does the term 'get-up' of products refer to in industrial design?",
+        "choices": ["The technical features of a product", "The ornamental or aesthetic design of the product", "The packaging of the product", "The functionality of the product"],
+        "answer": "The ornamental or aesthetic design of the product"
+    },
+    {
+        "question": "Which approach to protecting traditional knowledge emphasizes cultural heritage?",
+        "choices": ["Collective human rights", "Cultural heritage protection", "Use of existing intellectual property laws", "Commercial rights"],
+        "answer": "Cultural heritage protection"
+    },
+    {
+        "question": "What does 'design protection' primarily allow a holder to do?",
+        "choices": ["Develop new technological features", "License or sell trademarks", "Obtain patents for scientific processes", "Control the aesthetic aspects of a product and prevent copying"],
+        "answer": "Control the aesthetic aspects of a product and prevent copying"
+    }
+
+
+
+
+];
+
+
+     let selectedDifficulty = '';
+    let userAnswers = [];
+
+    function startQuiz(difficulty) {
+      selectedDifficulty = difficulty;
+      userAnswers = [];
+      document.querySelector('.category-select').style.display = 'none';
+      document.getElementById('quizContent').innerHTML = '';
+      document.getElementById('results').style.display = 'none';
+      loadQuestions();
+    }
+
+    function loadQuestions() {
+    const quizContent = document.getElementById('quizContent');
+    quizData.forEach((quiz, index) => {
+        const questionNumber = index + 1; // Generate question number
+        const questionBlock = document.createElement('div');
+        questionBlock.classList.add('question-block');
+        questionBlock.innerHTML = `
+          <div class="question">${questionNumber}. ${quiz.question}</div> <!-- Add question number here -->
+          <div class="choices" id="choices${index}"></div>
+        `;
+        quizContent.appendChild(questionBlock);
+        loadChoices(quiz, index);
+    });
+
+    if (selectedDifficulty === 'Beginner') {
+        showCorrectAnswers(); // Show correct answers immediately in Beginner mode
+    } else if (selectedDifficulty === 'Expert') {
+        document.getElementById('nextBtn').style.display = 'block'; // Show Submit button for Expert mode
+    } else if (selectedDifficulty === 'Intermediate') {
+        document.getElementById('nextBtn').style.display = 'none'; // Hide Submit button in Intermediate mode
+    }
+}
+
+
+
+    function loadChoices(quiz, index) {
+      const choicesContainer = document.getElementById(`choices${index}`);
+      quiz.choices.forEach(choice => {
+        const label = document.createElement('label');
+        label.classList.add('choice-label');
+        label.textContent = choice;
+        choicesContainer.appendChild(label);
+        label.onclick = () => handleChoiceSelection(index, label.textContent, label); // Add click event to each choice
+      });
+    }
+
+    function handleChoiceSelection(questionIndex, choiceText, labelElement) {
+      const choiceLabels = document.querySelectorAll(`#choices${questionIndex} .choice-label`);
+
+      if (selectedDifficulty === 'Intermediate') {
+        // Provide immediate feedback for Intermediate mode
+        const correctAnswer = quizData[questionIndex].answer;
+        choiceLabels.forEach(label => label.classList.remove('selected'));
+        if (choiceText === correctAnswer) {
+          labelElement.classList.add('correct');
+        } else {
+          labelElement.classList.add('wrong');
+          const correctLabel = Array.from(choiceLabels).find(label => label.textContent === correctAnswer);
+          correctLabel.classList.add('correct');
+        }
+        userAnswers[questionIndex] = choiceText;
+
+      } else if (selectedDifficulty === 'Expert') {
+        // Select and save answer for Expert mode (no feedback until submission)
+        choiceLabels.forEach(label => label.classList.remove('selected'));
+        labelElement.classList.add('selected'); // Highlight in black
+        userAnswers[questionIndex] = choiceText;
+      }
+    }
+
+    function showCorrectAnswers() {
+      quizData.forEach((quiz, index) => {
+        const choiceLabels = document.querySelectorAll(`#choices${index} .choice-label`);
+        choiceLabels.forEach(label => {
+          if (label.textContent === quiz.answer) {
+            label.classList.add('correct');
+          }
+        });
+      });
+    }
+
+    function submitQuiz() {
+  if (selectedDifficulty === 'Expert') {
+    let allAnswered = true;
+    userAnswers = [];
+
+    quizData.forEach((quiz, index) => {
+      const selectedOption = document.querySelector(`#choices${index} .choice-label.selected`);
+      
+      // Remove previous red star mark if it exists
+      const questionElement = document.querySelector(`#choices${index}`).previousElementSibling;
+      const existingStar = questionElement.querySelector('.red-star');
+      if (existingStar) existingStar.remove();
+
+      if (!selectedOption) {
+        allAnswered = false;
+        // Add red star mark for unanswered questions
+        const redStar = document.createElement('span');
+        redStar.textContent = ' *';
+        redStar.classList.add('red-star');
+        questionElement.appendChild(redStar); // Add the red star to the question
+      } else {
+        userAnswers.push(selectedOption.textContent);
+      }
+    });
+
+    if (!allAnswered) {
+      alert('Please select an answer for each question.');
+      return;  // Don't submit the quiz if there are unanswered questions
+    }
+
+    showResults();  // Proceed to show results if all questions are answered
+  }
+}
+
+
+
+    function showResults() {
+    const resultsElement = document.getElementById('results');
+    resultsElement.style.display = 'block';
+    resultsElement.innerHTML = '';
+
+    let score = 0;
+
+    quizData.forEach((quiz, index) => {
+        const choiceLabels = document.querySelectorAll(`#choices${index} .choice-label`);
+        const correctAnswer = quiz.answer;
+
+        // Clear previous styling (if any)
+        choiceLabels.forEach(label => {
+            label.classList.remove('correct', 'wrong', 'selected');
+        });
+
+        const userAnswer = userAnswers[index]; // Retrieve user answer
+
+        // Find the correct answer label
+        const correctLabel = Array.from(choiceLabels).find(label => label.textContent === correctAnswer);
+        if (correctLabel) correctLabel.classList.add('correct'); // Highlight correct answer in green
+
+        // Check if the user answered correctly
+        if (userAnswer === correctAnswer) {
+            score++;
+        } else {
+            // Highlight the wrong answer in red (if the user selected any option)
+            const selectedLabel = Array.from(choiceLabels).find(label => label.textContent === userAnswer);
+            if (selectedLabel) selectedLabel.classList.add('wrong');
+        }
+    });
+
+    resultsElement.innerHTML = `Quiz Completed! You scored ${score} out of ${quizData.length}.`;
+}
+
+
+    document.addEventListener('click', event => {
+      if (event.target.classList.contains('choice-label') && selectedDifficulty === 'Expert') {
+        const choiceLabels = document.querySelectorAll(`#choices${event.target.parentElement.id.split('choices')[1]} .choice-label`);
+        choiceLabels.forEach(label => label.classList.remove('selected'));
+        event.target.classList.add('selected'); // Highlight selected option in black
+      }
+    });
+  </script>
+</body>
+</html>
